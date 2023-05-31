@@ -1,0 +1,2 @@
+# block youtube junk but it blocks playlist also
+youtube.com##ytd-search ytd-item-section-renderer>#contents>:not(ytd-video-renderer),ytd-secondary-search-container-renderer
