@@ -1,166 +1,115 @@
 @echo off
+setlocal enabledelayedexpansion
+if "%~1"=="" (
+    goto :start
+) else (
+    set num=%~1
+    set url=%~2
+    goto :run
+)
 :start
+setlocal enabledelayedexpansion
+echo ┆[1]--------------------------------------┆
+echo ┆ v. ┆ Video Download HD                  ┆
+echo ┆ vf.┆ for FHD                            ┆
+echo ┆ a. ┆ Audio Downlaod                     ┆
+echo ┆ i. ┆ Downlaod from id                   ┆
+echo ┆ ix.┆ skip showing id list               ┆
+echo ┆[2]--------------------------------------┆
+echo ┆ p. ┆ Playlist Download                  ┆   
+echo ┆ pb.┆ for choosing the beginning (1-end) ┆   
+echo ┆ pr.┆ for choosing the range (1-2,5,7)   ┆   
+echo ┆[3]--------------------------------------┆
+echo ┆ s. ┆ Stream with mpv                    ┆
+echo ┆ c. ┆ Clip with ffmpeg                   ┆
+echo ┆ u. ┆ Print url                          ┆
+echo ┆-----------------------------------------┆
+echo. 
+echo [i] command should be [1] / [1][2] / [1][3] / [1][2][3] 
+echo [i] example vf or aprs (audio playlist from range stream with mpv)
 echo.
-echo -------------------------------------------------------------------------
-echo ! 1. ! Downlaod single video (1f for fhd) !                             !
-echo ! 2. ! Download single audio              !                             !
-echo !-----------------------------------------------------------------------!
-echo ! 3. ! Download playlist video            !                             !
-echo ! 31.! Download playlist video from start ! (1-end)                     !
-echo ! 32.! Download playlist video from range ! (1-2,5,7)                   !
-echo !-----------------------------------------------------------------------!
-echo ! 4. ! Download playlist audio            !                             !
-echo ! 41.! Download playlist audio from start ! (1-end)                     !
-echo ! 42.! Download playlist audio from range ! (1-2,5,7)                   !
-echo !-----------------------------------------------------------------------!
-echo ! 5. ! Show all and download              ! (IDs) you can merge two IDs !
-echo ! 51.! Stream with mpv from ID            ! (51s. skip showing all IDs) !
-echo ! 52.! Print url from ID                  ! (52s. skip showing all IDs) !
-echo !-----------------------------------------------------------------------!
-echo ! 6. ! Clip and download with ffmpeg      !                             !
-echo ! 7. ! Update yt-dlp                      !                             !
-echo -------------------------------------------------------------------------
+set /p num=.  the magic word: 
+set url=https://www.youtube.com/watch?v=P5TmbqJxHFg
+::set /p url=.  Url: 
 echo.
-set /p num=.  choose a number: 
-set /p url=.  Url: 
-echo.
-if %num%==1    goto download-single-video
-if %num%==1f   goto download-single-video-fhd
-if %num%==2    goto download-single-audio
-if %num%==3    goto download-playlist-video
-if %num%==31   goto downlaod-playlist-video-from-start
-if %num%==32   goto downlaod-playlist-video-from-range
-if %num%==4    goto download-playlist-audio
-if %num%==41   goto downlaod-playlist-audio-from-start
-if %num%==42   goto downlaod-playlist-audio-from-range
-if %num%==5    goto show-all
-if %num%==51   goto stream-mpv
-if %num%==51s  goto stream-mpv-skip
-if %num%==52   goto print-url
-if %num%==52s  goto print-url-skip
-if %num%==6    goto clip-and-download
-if %num%==7    goto update-yt-dlp
+:run
+if "!num!"=="v"    (call :yf720 & call :yo & set command=-f !yf! !yo! & goto ytdlp)
+if "!num!"=="vp"   (call :yf720 & call :yoplaylist & set command=-f !yf! !yo! & goto ytdlp)
+if "!num!"=="vpb"  (call :yf720 & call :yoplaylist & call :yplstart & set command=-f !yf! !yo! !plr! & goto ytdlp)
+if "!num!"=="vpr"  (call :yf720 & call :yoplaylist & call :yplrange & set command=-f !yf! !yo! !plr! & goto ytdlp)
+if "!num!"=="vs"   (call :yf720 & call :yo & mpv --ytdl-format=!yf! "!url!" & goto end)
+if "!num!"=="vc"   (call :yf720 & call :yo & call :ffmpegclip & goto ytdlp)
 
-::1
-:download-single-video
-	echo Command: $ yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o ./"%%(title)s.%%(ext)s" --no-playlist --no-mtime "%url%"
-	echo.
-	yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o ./"%%(title)s.%%(ext)s" --no-playlist --no-mtime "%url%"
-	goto exit
-	::1f
-	:download-single-video-fhd
-	echo Command: $ yt-dlp.exe -f "bestvideo[height<=?1080][ext=mp4]+bestaudio[ext=m4a]" -o ./"%%(title)s.%%(ext)s" --no-playlist --no-mtime "%url%"
-	echo.
-	yt-dlp.exe -f "bestvideo[height<=?1080][ext=mp4]+bestaudio[ext=m4a]" -o ./"%%(title)s.%%(ext)s" --no-playlist --no-mtime "%url%"
-	goto exit
-	
+if "!num!"=="vf"   (call :yf1080 & call :yo & set command=-f !yf! !yo! & goto ytdlp)
+if "!num!"=="vfp"  (call :yf1080 & call :yoplaylist & set command=-f !yf! !yo! & goto ytdlp)
+if "!num!"=="vfpb" (call :yf1080 & call :yoplaylist & call :yplstart & set command=-f !yf! !yo! !plr! & goto ytdlp)
+if "!num!"=="vfpr" (call :yf1080 & call :yoplaylist & call :yplrange & set command=-f !yf! !yo! !plr! & goto ytdlp)
+if "!num!"=="vfs"  (call :yf1080 & call :yo & mpv --ytdl-format=!yf! "!url!" & goto end)
+if "!num!"=="vfc"  (call :yf1080 & call :yo & call :ffmpegclip & goto ytdlp)
 
-::2
-:download-single-audio
-	echo Command: $ yt-dlp.exe -f bestaudio[ext=m4a] -o "./%%(title)s.%%(ext)s" --no-playlist --no-mtime "%url%"
-	echo.
-	yt-dlp.exe -f bestaudio[ext=m4a] -o "./%%(title)s.%%(ext)s" --no-playlist --no-mtime "%url%"
-	goto exit
+if "!num!"=="a"    (call :yfaudio & call :yo & set command=-f !yf! !yo! & goto ytdlp)
+if "!num!"=="ap"   (call :yfaudio & call :yoplaylist & set command=-f !yf! !yo! & goto ytdlp)
+if "!num!"=="apb"  (call :yfaudio & call :yoplaylist & call :yplstart & set command=-f !yf! !yo! !plr! & goto ytdlp)
+if "!num!"=="apr"  (call :yfaudio & call :yoplaylist & call :yplrange & set command=-f !yf! !yo! !plr! & goto ytdlp)
+if "!num!"=="as"   (call :yfaudio & call :yo & mpv.exe --ytdl-format=!yf! "!url!" & goto end)
+if "!num!"=="ac"   (call :yfaudio & call :yo & call :ffmpegclip & goto ytdlp)
 
-::3
-:download-playlist-video
-	echo Command: $ yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --no-mtime "%url%"
-	echo.
-	yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --no-mtime "%url%"
-	goto exit
+if "!num!"=="i"    (call :yfid & call :yo & set command=!yf! !yo! & goto ytdlp)
+if "!num!"=="is"   (call :yfid & call :yo & mpv.exe --ytdl-format=!yf! & goto end)
+if "!num!"=="ic"   (call :yfid & call :yo & ffmpegclip & goto ytdlp)
 
-::31
-:downlaod-playlist-video-from-start
-	echo Command: $	yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-start %playlist-start% --no-mtime "%url%"
-	echo.
-	set /p playlist-start=Playlist start: 
-	yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-start %playlist-start% --no-mtime "%url%"
-	goto exit
+if "!num!"=="ix"   (call :yfidx & call :yo & set command=!yf! !yo! & goto ytdlp)
+if "!num!"=="ixs"  (call :yfidx & call :yo & mpv.exe --ytdl-format=!yf! & goto end)
+if "!num!"=="ixc"  (call :yfidx & call :yo & ffmpegclip & goto ytdlp)
 
-::32
-:downlaod-playlist-video-from-range
-	echo Command: $ yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-items %playlist-items% --no-mtime "%url%"
-	echo.
-	set /p playlist-items=Playlist range: 
-	yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-items %playlist-items% --no-mtime "%url%"
-	goto exit
+:ytdlp
+echo [$] yt-dlp.exe !command! "!url!"
+::yt-dlp.exe !command! "!url!"
+goto end
 
-::4
-:download-playlist-audio
-	echo Command: $ yt-dlp.exe -f "bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --no-mtime "%url%"
-	echo.
-	yt-dlp.exe -f "bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --no-mtime "%url%"
-	goto exit
+:yf720
+set yf="22/bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]"
+EXIT /B 0
 
-::41
-:downlaod-playlist-audio-from-start
-	echo Command: $ yt-dlp.exe -f "bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-start %playlist-start% --no-mtime %url%
-	echo.
-	set /p playlist-start=Playlist start: 
-	yt-dlp.exe -f "bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-start %playlist-start% --no-mtime %url%
-	goto exit
+:yf1080
+set yf="bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]"
+EXIT /B 0
 
-::42
-:downlaod-playlist-audio-from-range
-	echo Command: $ yt-dlp.exe -f "bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-items %playlist-items% --no-mtime "%url%"
-	echo.
-	set /p playlist-items=Playlist range: 
-	yt-dlp.exe -f "bestaudio[ext=m4a]" -o "./%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --playlist-items %playlist-items% --no-mtime "%url%"
-	goto exit
+:yfaudio
+set yf="bestaudio[ext=m4a]"
+EXIT /B 0
 
-::5
-:show-all
-	echo Command: $ yt-dlp.exe -F --no-playlist "%url%"
-	echo.
-	yt-dlp.exe -F --no-playlist "%url%"
-	set /p id=id: 
-	yt-dlp.exe -f %id% --no-playlist "%url%"
-	goto exit
+:yo
+set yo=-o C:/Users/%USERNAME%/Downloads/"%%(title)s.%%(ext)s" --no-playlist --no-mtime
+EXIT /B 0
 
-::51
-:stream-mpv
-	echo Command: $ yt-dlp.exe -F %url%
-	echo.
-	yt-dlp.exe -F %url%
-	::51s
-	:stream-mpv-skip
-		set /p id=id: 
-		echo Command: $ mpv.exe --ytdl-format=%id% "%url%"
-		echo.
-		mpv.exe --ytdl-format=%id%  "%url%"
-		goto exit
+:yoplaylist
+set yo=-o C:/Users/%USERNAME%/Downloads/"%%(playlist)s/%%(playlist_index)s.%%(title)s.%%(ext)s" --yes-playlist --no-mtime
+EXIT /B 0
 
-::52
-:print-url
-	echo Command: $ yt-dlp.exe -F --no-playlist %url%
-	echo.
-	yt-dlp.exe -F --no-playlist %url%
-	:print-url-skip
-		set /p id=id:
-		echo Command: $ yt-dlp.exe -g -f %id% --no-playlist "%url%"
-		echo.
-		yt-dlp.exe -g -f %id% --no-playlist "%url%"
-		goto exit
+:yplstart
+set /p plrx=Playlist start: 
+set plr= --playlist-start !plrx!
+EXIT /B 0
 
-::6
-:clip-and-download
-	echo Command: $ yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o ./"%%(title)s.%%(ext)s" --external-downloader ffmpeg --external-downloader-args "ffmpeg_i:-ss %clip-start% -to %clip-end%" --no-playlist --no-mtime "%url%"
-	echo.
-	set /p clip-start= Clip start: 
-	set /p clip-end= Clip end: 
-	yt-dlp.exe -f "22/bestvideo[height<=?720][ext=mp4]+bestaudio[ext=m4a]" -o ./"%%(title)s.%%(ext)s" --external-downloader ffmpeg --external-downloader-args "ffmpeg_i:-ss %clip-start% -to %clip-end%" --no-playlist --no-mtime "%url%"
-	goto exit
+:yplrange
+set /p plrx=Playlist range: 
+set plr= --playlist-items !plrx!
+EXIT /B 0
 
-::7
-:update-yt-dlp
-	echo Command: $ yt-dlp.exe -U
-	echo.
-	yt-dlp.exe -U
-	goto exit
+:ffmpegclip
+set /p clip-start= Clip start: 
+set /p clip-end= Clip end: 
+set command=-f !yf! !yo! --external-downloader ffmpeg --external-downloader-args "ffmpeg_i:-ss !clip-start! -to !clip-end!"
+goto ytdlp
 
-:exit
+:yfid
+yt-dlp.exe -F !url!
+:yfidx
+set /p yf=id: 
+
+:end
+endlocal
 pause
+cls
 goto start
-
-
-
